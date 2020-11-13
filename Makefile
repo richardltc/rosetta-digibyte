@@ -3,13 +3,13 @@
 	coverage spellcheck salus build-local coverage-local format check-format
 
 ADDLICENSE_CMD=go run github.com/google/addlicense
-ADDLICENCE_SCRIPT=${ADDLICENSE_CMD} -c "Coinbase, Inc." -l "apache" -v
+ADDLICENCE_SCRIPT=${ADDLICENSE_CMD} -c "DigiByte." -l "apache" -v
 SPELLCHECK_CMD=go run github.com/client9/misspell/cmd/misspell
 GOLINES_CMD=go run github.com/segmentio/golines
 GOLINT_CMD=go run golang.org/x/lint/golint
 GOVERALLS_CMD=go run github.com/mattn/goveralls
 GOIMPORTS_CMD=go run golang.org/x/tools/cmd/goimports
-GO_PACKAGES=./services/... ./indexer/... ./bitcoin/... ./configuration/...
+GO_PACKAGES=./services/... ./indexer/... ./digibyte/... ./configuration/...
 GO_FOLDERS=$(shell echo ${GO_PACKAGES} | sed -e "s/\.\///g" | sed -e "s/\/\.\.\.//g")
 TEST_SCRIPT=go test ${GO_PACKAGES}
 LINT_SETTINGS=golint,misspell,gocyclo,gocritic,whitespace,goconst,gocognit,bodyclose,unconvert,lll,unparam
@@ -20,27 +20,27 @@ deps:
 	go get ./...
 
 build:
-	docker build -t rosetta-bitcoin:latest https://github.com/coinbase/rosetta-bitcoin.git
+	docker build -t rosetta-digibyte:latest https://github.com/tehG30RG3/rosetta-digibyte.git
 
 build-local:
-	docker build -t rosetta-bitcoin:latest .
+	docker build -t rosetta-digibyte:latest .
 
 build-release:
 	# make sure to always set version with vX.X.X
-	docker build -t rosetta-bitcoin:$(version) .;
-	docker save rosetta-bitcoin:$(version) | gzip > rosetta-bitcoin-$(version).tar.gz;
+	docker build -t rosetta-digibyte:$(version) .;
+	docker save rosetta-digibyte:$(version) | gzip > rosetta-digibyte-$(version).tar.gz;
 
 run-mainnet-online:
-	docker run -d --rm --ulimit "nofile=${NOFILE}:${NOFILE}" -v "${PWD}/bitcoin-data:/data" -e "MODE=ONLINE" -e "NETWORK=MAINNET" -e "PORT=8080" -p 8080:8080 -p 8333:8333 rosetta-bitcoin:latest
+	docker run -d --rm --ulimit "nofile=${NOFILE}:${NOFILE}" -v "${PWD}/digibyte-data:/data" -e "MODE=ONLINE" -e "NETWORK=MAINNET" -e "PORT=8080" -p 8080:8080 -p 8333:8333 rosetta-digibyte:latest
 
 run-mainnet-offline:
-	docker run -d --rm -e "MODE=OFFLINE" -e "NETWORK=MAINNET" -e "PORT=8081" -p 8081:8081 rosetta-bitcoin:latest
+	docker run -d --rm -e "MODE=OFFLINE" -e "NETWORK=MAINNET" -e "PORT=8081" -p 8081:8081 rosetta-digibyte:latest
 
 run-testnet-online:
-	docker run -d --rm --ulimit "nofile=${NOFILE}:${NOFILE}" -v "${PWD}/bitcoin-data:/data" -e "MODE=ONLINE" -e "NETWORK=TESTNET" -e "PORT=8080" -p 8080:8080 -p 18333:18333 rosetta-bitcoin:latest
+	docker run -d --rm --ulimit "nofile=${NOFILE}:${NOFILE}" -v "${PWD}/digibyte-data:/data" -e "MODE=ONLINE" -e "NETWORK=TESTNET" -e "PORT=8080" -p 8080:8080 -p 18333:18333 rosetta-digibyte:latest
 
 run-testnet-offline:
-	docker run -d --rm -e "MODE=OFFLINE" -e "NETWORK=TESTNET" -e "PORT=8081" -p 8081:8081 rosetta-bitcoin:latest
+	docker run -d --rm -e "MODE=OFFLINE" -e "NETWORK=TESTNET" -e "PORT=8081" -p 8081:8081 rosetta-digibyte:latest
 
 train:
 	./zstd-train.sh $(network) transaction $(data-directory)

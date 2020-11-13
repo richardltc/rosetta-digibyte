@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package bitcoin
+package digibyte
 
 import (
 	"bytes"
@@ -26,7 +26,7 @@ import (
 	"strconv"
 	"time"
 
-	bitcoinUtils "github.com/coinbase/rosetta-bitcoin/utils"
+	bitcoinUtils "github.com/tehG30RG3/rosetta-digibyte/utils"
 
 	"github.com/btcsuite/btcutil"
 	"github.com/coinbase/rosetta-sdk-go/storage"
@@ -57,28 +57,28 @@ const (
 type requestMethod string
 
 const (
-	// https://bitcoin.org/en/developer-reference#getblock
+	// https://digibyte.org/en/developer-reference#getblock
 	requestMethodGetBlock requestMethod = "getblock"
 
-	// https://bitcoin.org/en/developer-reference#getblockhash
+	// https://digibyte.org/en/developer-reference#getblockhash
 	requestMethodGetBlockHash requestMethod = "getblockhash"
 
-	// https://bitcoin.org/en/developer-reference#getblockchaininfo
+	// https://digibyte.org/en/developer-reference#getblockchaininfo
 	requestMethodGetBlockchainInfo requestMethod = "getblockchaininfo"
 
-	// https://developer.bitcoin.org/reference/rpc/getpeerinfo.html
+	// https://developer.digibyte.org/reference/rpc/getpeerinfo.html
 	requestMethodGetPeerInfo requestMethod = "getpeerinfo"
 
-	// https://developer.bitcoin.org/reference/rpc/pruneblockchain.html
+	// https://developer.digibyte.org/reference/rpc/pruneblockchain.html
 	requestMethodPruneBlockchain requestMethod = "pruneblockchain"
 
-	// https://developer.bitcoin.org/reference/rpc/sendrawtransaction.html
+	// https://developer.digibyte.org/reference/rpc/sendrawtransaction.html
 	requestMethodSendRawTransaction requestMethod = "sendrawtransaction"
 
-	// https://developer.bitcoin.org/reference/rpc/estimatesmartfee.html
+	// https://developer.digibyte.org/reference/rpc/estimatesmartfee.html
 	requestMethodEstimateSmartFee requestMethod = "estimatesmartfee"
 
-	// https://developer.bitcoin.org/reference/rpc/getrawmempool.html
+	// https://developer.digibyte.org/reference/rpc/getrawmempool.html
 	requestMethodRawMempool requestMethod = "getrawmempool"
 
 	// blockNotFoundErrCode is the RPC error code when a block cannot be found
@@ -90,11 +90,11 @@ const (
 	dialTimeout    = 5 * time.Second
 
 	// timeMultiplier is used to multiply the time
-	// returned in Bitcoin blocks to be milliseconds.
+	// returned in DigiByte blocks to be milliseconds.
 	timeMultiplier = 1000
 
-	// rpc credentials are fixed in rosetta-bitcoin
-	// because we never expose access to the raw bitcoind
+	// rpc credentials are fixed in rosetta-digibyte
+	// because we never expose access to the raw digibyted
 	// endpoints (that could be used perform an attack, like
 	// changing our peers).
 	rpcUsername = "rosetta"
@@ -110,10 +110,10 @@ var (
 	ErrJSONRPCError = errors.New("JSON-RPC error")
 )
 
-// Client is used to fetch blocks from bitcoind and
-// to parse Bitcoin block data into Rosetta types.
+// Client is used to fetch blocks from digibyted and
+// to parse DigiByte block data into Rosetta types.
 //
-// We opted not to use existing Bitcoin RPC libraries
+// We opted not to use existing DigiByte RPC libraries
 // because they don't allow providing context
 // in each request.
 type Client struct {
@@ -131,7 +131,7 @@ func LocalhostURL(rpcPort int) string {
 	return fmt.Sprintf("http://localhost:%d", rpcPort)
 }
 
-// NewClient creates a new Bitcoin client.
+// NewClient creates a new DigiByte client.
 func NewClient(
 	baseURL string,
 	genesisBlockIdentifier *types.BlockIdentifier,
@@ -162,7 +162,7 @@ func newHTTPClient(timeout time.Duration) *http.Client {
 }
 
 // NetworkStatus returns the *types.NetworkStatusResponse for
-// bitcoind.
+// digibyted.
 func (b *Client) NetworkStatus(ctx context.Context) (*types.NetworkStatusResponse, error) {
 	rawBlock, err := b.getBlock(ctx, nil)
 	if err != nil {
@@ -264,7 +264,7 @@ func (b *Client) ParseBlock(
 }
 
 // SendRawTransaction submits a serialized transaction
-// to bitcoind.
+// to digibyted.
 func (b *Client) SendRawTransaction(
 	ctx context.Context,
 	serializedTx string,
@@ -308,7 +308,7 @@ func (b *Client) PruneBlockchain(
 ) (int64, error) {
 	// Parameters:
 	//   1. Height
-	// https://developer.bitcoin.org/reference/rpc/pruneblockchain.html#argument-1-height
+	// https://developer.digibyte.org/reference/rpc/pruneblockchain.html#argument-1-height
 	params := []interface{}{height}
 
 	response := &pruneBlockchainResponse{}
@@ -362,7 +362,7 @@ func (b *Client) getBlock(
 	// Parameters:
 	//   1. Block hash (string, required)
 	//   2. Verbosity (integer, optional, default=1)
-	// https://bitcoin.org/en/developer-reference#getblock
+	// https://digibyte.org/en/developer-reference#getblock
 	params := []interface{}{hash, blockVerbosity}
 
 	response := &blockResponse{}
@@ -448,14 +448,14 @@ func (b *Client) parseBlockData(block *Block) (*types.Block, error) {
 
 // getHashFromIndex performs the `getblockhash` JSON-RPC request for the specified
 // block index, and returns the hash.
-// https://bitcoin.org/en/developer-reference#getblockhash
+// https://digibyte.org/en/developer-reference#getblockhash
 func (b *Client) getHashFromIndex(
 	ctx context.Context,
 	index int64,
 ) (string, error) {
 	// Parameters:
 	//   1. Block height (numeric, required)
-	// https://bitcoin.org/en/developer-reference#getblockhash
+	// https://digibyte.org/en/developer-reference#getblockhash
 	params := []interface{}{index}
 
 	response := &blockHashResponse{}
@@ -658,7 +658,7 @@ func (b *Client) parseOutputTransactionOperation(
 		CoinAction: types.CoinCreated,
 	}
 
-	// If we are unable to parse the output account (i.e. bitcoind
+	// If we are unable to parse the output account (i.e. digibyted
 	// returns a blank/nonstandard ScriptPubKey), we create an address as the
 	// concatenation of the tx hash and index.
 	//
@@ -805,7 +805,7 @@ func (b *Client) coinbaseTxOperation(
 	}, nil
 }
 
-// post makes a HTTP request to a Bitcoin node
+// post makes a HTTP request to a DigiByte node
 func (b *Client) post(
 	ctx context.Context,
 	method requestMethod,

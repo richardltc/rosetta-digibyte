@@ -18,7 +18,7 @@ executors:
     docker:
       - image: circleci/golang:1.13
         user: root # go directory is owned by root
-    working_directory: /go/src/github.com/coinbase/rosetta-bitcoin
+    working_directory: /go/src/github.com/tehG30RG3/rosetta-digibyte
     environment:
       - GO111MODULE: "on"
 

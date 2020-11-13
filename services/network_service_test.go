@@ -18,9 +18,9 @@ import (
 	"context"
 	"testing"
 
-	"github.com/coinbase/rosetta-bitcoin/bitcoin"
-	"github.com/coinbase/rosetta-bitcoin/configuration"
-	mocks "github.com/coinbase/rosetta-bitcoin/mocks/services"
+	"github.com/tehG30RG3/rosetta-digibyte/digibyte"
+	"github.com/tehG30RG3/rosetta-digibyte/configuration"
+	mocks "github.com/tehG30RG3/rosetta-digibyte/mocks/services"
 
 	"github.com/coinbase/rosetta-sdk-go/types"
 	"github.com/stretchr/testify/assert"
@@ -35,16 +35,16 @@ var (
 			MiddlewareVersion: &middlewareVersion,
 		},
 		Allow: &types.Allow{
-			OperationStatuses:       bitcoin.OperationStatuses,
-			OperationTypes:          bitcoin.OperationTypes,
+			OperationStatuses:       digibyte.OperationStatuses,
+			OperationTypes:          digibyte.OperationTypes,
 			Errors:                  Errors,
 			HistoricalBalanceLookup: HistoricalBalanceLookup,
 		},
 	}
 
 	networkIdentifier = &types.NetworkIdentifier{
-		Network:    bitcoin.MainnetNetwork,
-		Blockchain: bitcoin.Blockchain,
+		Network:    digibyte.MainnetNetwork,
+		Blockchain: digibyte.Blockchain,
 	}
 )
 
@@ -81,7 +81,7 @@ func TestNetworkEndpoints_Online(t *testing.T) {
 	cfg := &configuration.Configuration{
 		Mode:                   configuration.Online,
 		Network:                networkIdentifier,
-		GenesisBlockIdentifier: bitcoin.MainnetGenesisBlockIdentifier,
+		GenesisBlockIdentifier: digibyte.MainnetGenesisBlockIdentifier,
 	}
 	mockIndexer := &mocks.Indexer{}
 	mockClient := &mocks.Client{}
@@ -118,7 +118,7 @@ func TestNetworkEndpoints_Online(t *testing.T) {
 	networkStatus, err := servicer.NetworkStatus(ctx, nil)
 	assert.Nil(t, err)
 	assert.Equal(t, &types.NetworkStatusResponse{
-		GenesisBlockIdentifier: bitcoin.MainnetGenesisBlockIdentifier,
+		GenesisBlockIdentifier: digibyte.MainnetGenesisBlockIdentifier,
 		CurrentBlockIdentifier: blockResponse.Block.BlockIdentifier,
 		Peers: []*types.Peer{
 			{

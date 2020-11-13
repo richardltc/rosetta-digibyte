@@ -1,4 +1,5 @@
 # Copyright 2020 Coinbase, Inc.
+# Copyright 2020 DigiByte.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Build bitcoind
+# Build digibyted
 FROM ubuntu:18.04 as bitcoind-builder
 
 RUN mkdir -p /app \
@@ -23,7 +24,7 @@ WORKDIR /app
 RUN apt-get update && apt-get install -y make gcc g++ autoconf autotools-dev bsdmainutils build-essential git libboost-all-dev \
   libcurl4-openssl-dev libdb++-dev libevent-dev libssl-dev libtool pkg-config python python-pip libzmq3-dev wget
 
-# VERSION: Bitcoin Core 0.20.1
+# VERSION: DigiByte Core 0.20.1
 RUN git clone https://github.com/bitcoin/bitcoin \
   && cd bitcoin \
   && git checkout 7ff64311bee570874c4f0dfa18f518552188df08
@@ -62,7 +63,7 @@ COPY . src
 RUN cd src \
   && go build \
   && cd .. \
-  && mv src/rosetta-bitcoin /app/rosetta-bitcoin \
+  && mv src/rosetta-digibyte /app/rosetta-digibyte \
   && mv src/assets/* /app \
   && rm -rf src 
 
@@ -89,4 +90,4 @@ COPY --from=rosetta-builder /app/* /app/
 # Set permissions for everything added to /app
 RUN chmod -R 755 /app/*
 
-CMD ["/app/rosetta-bitcoin"]
+CMD ["/app/rosetta-digibyte"]

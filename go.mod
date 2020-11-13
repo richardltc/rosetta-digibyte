@@ -1,4 +1,4 @@
-module github.com/coinbase/rosetta-bitcoin
+module github.com/tehG30RG3/rosetta-digibyte
 
 go 1.13
 

@@ -20,10 +20,10 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/coinbase/rosetta-bitcoin/bitcoin"
-	"github.com/coinbase/rosetta-bitcoin/configuration"
-	"github.com/coinbase/rosetta-bitcoin/services"
-	"github.com/coinbase/rosetta-bitcoin/utils"
+	"github.com/tehG30RG3/rosetta-digibyte/digibyte"
+	"github.com/tehG30RG3/rosetta-digibyte/configuration"
+	"github.com/tehG30RG3/rosetta-digibyte/services"
+	"github.com/tehG30RG3/rosetta-digibyte/utils"
 
 	"github.com/coinbase/rosetta-sdk-go/asserter"
 	"github.com/coinbase/rosetta-sdk-go/storage"
@@ -66,10 +66,10 @@ var (
 type Client interface {
 	NetworkStatus(context.Context) (*types.NetworkStatusResponse, error)
 	PruneBlockchain(context.Context, int64) (int64, error)
-	GetRawBlock(context.Context, *types.PartialBlockIdentifier) (*bitcoin.Block, []string, error)
+	GetRawBlock(context.Context, *types.PartialBlockIdentifier) (*digibyte.Block, []string, error)
 	ParseBlock(
 		context.Context,
-		*bitcoin.Block,
+		*digibyte.Block,
 		map[string]*storage.AccountCoin,
 	) (*types.Block, error)
 }
@@ -180,8 +180,8 @@ func Initialize(
 	asserter, err := asserter.NewClientWithOptions(
 		config.Network,
 		config.GenesisBlockIdentifier,
-		bitcoin.OperationTypes,
-		bitcoin.OperationStatuses,
+		digibyte.OperationTypes,
+		digibyte.OperationStatuses,
 		services.Errors,
 		nil,
 	)
@@ -219,7 +219,7 @@ func Initialize(
 	return i, nil
 }
 
-// waitForNode returns once bitcoind is ready to serve
+// waitForNode returns once digibyted is ready to serve
 // block queries.
 func (i *Indexer) waitForNode(ctx context.Context) error {
 	logger := utils.ExtractLogger(ctx, "indexer")
@@ -229,15 +229,15 @@ func (i *Indexer) waitForNode(ctx context.Context) error {
 			return nil
 		}
 
-		logger.Infow("waiting for bitcoind...")
+		logger.Infow("waiting for digibyted...")
 		if err := sdkUtils.ContextSleep(ctx, nodeWaitSleep); err != nil {
 			return err
 		}
 	}
 }
 
-// Sync attempts to index Bitcoin blocks using
-// the bitcoin.Client until stopped.
+// Sync attempts to index DigiByte blocks using
+// the digibyte.Client until stopped.
 func (i *Indexer) Sync(ctx context.Context) error {
 	if err := i.waitForNode(ctx); err != nil {
 		return fmt.Errorf("%w: failed to wait for node", err)
@@ -270,7 +270,7 @@ func (i *Indexer) Sync(ctx context.Context) error {
 	return syncer.Sync(ctx, startIndex, indexPlaceholder)
 }
 
-// Prune attempts to prune blocks in bitcoind every
+// Prune attempts to prune blocks in digibyted every
 // pruneFrequency.
 func (i *Indexer) Prune(ctx context.Context) error {
 	logger := utils.ExtractLogger(ctx, "pruner")
@@ -298,16 +298,16 @@ func (i *Indexer) Prune(ctx context.Context) error {
 				continue
 			}
 
-			logger.Infow("attempting to prune bitcoind", "prune height", pruneHeight)
+			logger.Infow("attempting to prune digibyted", "prune height", pruneHeight)
 			prunedHeight, err := i.client.PruneBlockchain(ctx, pruneHeight)
 			if err != nil {
 				logger.Warnw(
-					"unable to prune bitcoind",
+					"unable to prune digibyted",
 					"prune height", pruneHeight,
 					"error", err,
 				)
 			} else {
-				logger.Infow("pruned bitcoind", "prune height", prunedHeight)
+				logger.Infow("pruned digibyted", "prune height", prunedHeight)
 			}
 		}
 	}
@@ -418,7 +418,7 @@ func (i *Indexer) NetworkStatus(
 
 func (i *Indexer) findCoin(
 	ctx context.Context,
-	btcBlock *bitcoin.Block,
+	btcBlock *digibyte.Block,
 	coinIdentifier string,
 ) (*types.Coin, *types.AccountIdentifier, error) {
 	for ctx.Err() == nil {
@@ -480,7 +480,7 @@ func (i *Indexer) findCoin(
 
 		// Put Transaction in WaitTable if doesn't already exist (could be
 		// multiple listeners)
-		transactionHash := bitcoin.TransactionHash(coinIdentifier)
+		transactionHash := digibyte.TransactionHash(coinIdentifier)
 		val, ok := i.waiter.Get(transactionHash, false)
 		if !ok {
 			val = &waitTableEntry{
@@ -503,7 +503,7 @@ func (i *Indexer) findCoin(
 
 func (i *Indexer) checkHeaderMatch(
 	ctx context.Context,
-	btcBlock *bitcoin.Block,
+	btcBlock *digibyte.Block,
 ) error {
 	headBlock, err := i.blockStorage.GetHeadBlockIdentifier(ctx)
 	if err != nil && !errors.Is(err, storage.ErrHeadBlockNotFound) {
@@ -523,7 +523,7 @@ func (i *Indexer) checkHeaderMatch(
 
 func (i *Indexer) findCoins(
 	ctx context.Context,
-	btcBlock *bitcoin.Block,
+	btcBlock *digibyte.Block,
 	coins []string,
 ) (map[string]*storage.AccountCoin, error) {
 	if err := i.checkHeaderMatch(ctx, btcBlock); err != nil {
@@ -562,7 +562,7 @@ func (i *Indexer) findCoins(
 	shouldAbort := false
 	for _, coinIdentifier := range remainingCoins {
 		// Wait on Channel
-		txHash := bitcoin.TransactionHash(coinIdentifier)
+		txHash := digibyte.TransactionHash(coinIdentifier)
 		entry, ok := i.waiter.Get(txHash, true)
 		if !ok {
 			return nil, fmt.Errorf("transaction %s not in waiter", txHash)
@@ -624,7 +624,7 @@ func (i *Indexer) Block(
 	blockIdentifier *types.PartialBlockIdentifier,
 ) (*types.Block, error) {
 	// get raw block
-	var btcBlock *bitcoin.Block
+	var btcBlock *digibyte.Block
 	var coins []string
 	var err error
 
@@ -672,14 +672,14 @@ func (i *Indexer) Block(
 func (i *Indexer) GetScriptPubKeys(
 	ctx context.Context,
 	coins []*types.Coin,
-) ([]*bitcoin.ScriptPubKey, error) {
+) ([]*digibyte.ScriptPubKey, error) {
 	databaseTransaction := i.database.NewDatabaseTransaction(ctx, false)
 	defer databaseTransaction.Discard(ctx)
 
-	scripts := make([]*bitcoin.ScriptPubKey, len(coins))
+	scripts := make([]*digibyte.ScriptPubKey, len(coins))
 	for j, coin := range coins {
 		coinIdentifier := coin.CoinIdentifier
-		transactionHash, networkIndex, err := bitcoin.ParseCoinIdentifier(coinIdentifier)
+		transactionHash, networkIndex, err := digibyte.ParseCoinIdentifier(coinIdentifier)
 		if err != nil {
 			return nil, fmt.Errorf("%w: unable to parse coin identifier", err)
 		}
@@ -698,7 +698,7 @@ func (i *Indexer) GetScriptPubKeys(
 		}
 
 		for _, op := range transaction.Operations {
-			if op.Type != bitcoin.OutputOpType {
+			if op.Type != digibyte.OutputOpType {
 				continue
 			}
 
@@ -706,7 +706,7 @@ func (i *Indexer) GetScriptPubKeys(
 				continue
 			}
 
-			var opMetadata bitcoin.OperationMetadata
+			var opMetadata digibyte.OperationMetadata
 			if err := types.UnmarshalMap(op.Metadata, &opMetadata); err != nil {
 				return nil, fmt.Errorf(
 					"%w: unable to unmarshal operation metadata %+v",

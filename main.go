@@ -24,15 +24,15 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/coinbase/rosetta-bitcoin/bitcoin"
-	"github.com/coinbase/rosetta-bitcoin/configuration"
-	"github.com/coinbase/rosetta-bitcoin/indexer"
-	"github.com/coinbase/rosetta-bitcoin/services"
-	"github.com/coinbase/rosetta-bitcoin/utils"
+	"github.com/tehG30RG3/rosetta-digibyte/digibyte"
+	"github.com/tehG30RG3/rosetta-digibyte/configuration"
+	"github.com/tehG30RG3/rosetta-digibyte/indexer"
+	"github.com/tehG30RG3/rosetta-digibyte/services"
+	"github.com/tehG30RG3/rosetta-digibyte/utils"
 
-	"github.com/coinbase/rosetta-sdk-go/asserter"
-	"github.com/coinbase/rosetta-sdk-go/server"
-	"github.com/coinbase/rosetta-sdk-go/types"
+	"github.com/tehG30RG3/rosetta-sdk-go/asserter"
+	"github.com/tehG30RG3/rosetta-sdk-go/server"
+	"github.com/tehG30RG3/rosetta-sdk-go/types"
 	"github.com/grpc-ecosystem/go-grpc-middleware/logging/zap/ctxzap"
 	"go.uber.org/zap"
 	"golang.org/x/sync/errgroup"
@@ -79,15 +79,15 @@ func startOnlineDependencies(
 	cancel context.CancelFunc,
 	cfg *configuration.Configuration,
 	g *errgroup.Group,
-) (*bitcoin.Client, *indexer.Indexer, error) {
-	client := bitcoin.NewClient(
-		bitcoin.LocalhostURL(cfg.RPCPort),
+) (*digibyte.Client, *indexer.Indexer, error) {
+	client := digibyte.NewClient(
+		digibyte.LocalhostURL(cfg.RPCPort),
 		cfg.GenesisBlockIdentifier,
 		cfg.Currency,
 	)
 
 	g.Go(func() error {
-		return bitcoin.StartBitcoind(ctx, cfg.ConfigPath, g)
+		return digibyte.StartDigibyted(ctx, cfg.ConfigPath, g)
 	})
 
 	i, err := indexer.Initialize(
@@ -142,7 +142,7 @@ func main() {
 	})
 
 	var i *indexer.Indexer
-	var client *bitcoin.Client
+	var client *digibyte.Client
 	if cfg.Mode == configuration.Online {
 		client, i, err = startOnlineDependencies(ctx, cancel, cfg, g)
 		if err != nil {
@@ -153,7 +153,7 @@ func main() {
 	// The asserter automatically rejects incorrectly formatted
 	// requests.
 	asserter, err := asserter.NewServer(
-		bitcoin.OperationTypes,
+		digibyte.OperationTypes,
 		services.HistoricalBalanceLookup,
 		[]*types.NetworkIdentifier{cfg.Network},
 		nil,
@@ -196,10 +196,10 @@ func main() {
 	}
 
 	if signalReceived {
-		logger.Fatalw("rosetta-bitcoin halted")
+		logger.Fatalw("rosetta-digibyte halted")
 	}
 
 	if err != nil {
-		logger.Fatalw("rosetta-bitcoin sync failed", "error", err)
+		logger.Fatalw("rosetta-digibyte sync failed", "error", err)
 	}
 }

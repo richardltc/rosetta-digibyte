@@ -19,9 +19,9 @@ import (
 	"encoding/hex"
 	"testing"
 
-	"github.com/coinbase/rosetta-bitcoin/bitcoin"
-	"github.com/coinbase/rosetta-bitcoin/configuration"
-	mocks "github.com/coinbase/rosetta-bitcoin/mocks/services"
+	"github.com/tehG30RG3/rosetta-digibyte/digibyte"
+	"github.com/tehG30RG3/rosetta-digibyte/configuration"
+	mocks "github.com/tehG30RG3/rosetta-digibyte/mocks/services"
 
 	"github.com/coinbase/rosetta-sdk-go/types"
 	"github.com/stretchr/testify/assert"
@@ -47,15 +47,15 @@ func forceMarshalMap(t *testing.T, i interface{}) map[string]interface{} {
 
 func TestConstructionService(t *testing.T) {
 	networkIdentifier = &types.NetworkIdentifier{
-		Network:    bitcoin.TestnetNetwork,
-		Blockchain: bitcoin.Blockchain,
+		Network:    digibyte.TestnetNetwork,
+		Blockchain: digibyte.Blockchain,
 	}
 
 	cfg := &configuration.Configuration{
 		Mode:     configuration.Online,
 		Network:  networkIdentifier,
-		Params:   bitcoin.TestnetParams,
-		Currency: bitcoin.TestnetCurrency,
+		Params:   digibyte.TestnetParams,
+		Currency: digibyte.TestnetCurrency,
 	}
 
 	mockIndexer := &mocks.Indexer{}
@@ -88,13 +88,13 @@ func TestConstructionService(t *testing.T) {
 			OperationIdentifier: &types.OperationIdentifier{
 				Index: 0,
 			},
-			Type: bitcoin.InputOpType,
+			Type: digibyte.InputOpType,
 			Account: &types.AccountIdentifier{
 				Address: "tb1qcqzmqzkswhfshzd8kedhmtvgnxax48z4fklhvm",
 			},
 			Amount: &types.Amount{
 				Value:    "-1000000",
-				Currency: bitcoin.TestnetCurrency,
+				Currency: digibyte.TestnetCurrency,
 			},
 			CoinChange: &types.CoinChange{
 				CoinIdentifier: &types.CoinIdentifier{
@@ -107,26 +107,26 @@ func TestConstructionService(t *testing.T) {
 			OperationIdentifier: &types.OperationIdentifier{
 				Index: 1,
 			},
-			Type: bitcoin.OutputOpType,
+			Type: digibyte.OutputOpType,
 			Account: &types.AccountIdentifier{
 				Address: "tb1q3r8xjf0c2yazxnq9ey3wayelygfjxpfqjvj5v7",
 			},
 			Amount: &types.Amount{
 				Value:    "954843",
-				Currency: bitcoin.TestnetCurrency,
+				Currency: digibyte.TestnetCurrency,
 			},
 		},
 		{
 			OperationIdentifier: &types.OperationIdentifier{
 				Index: 2,
 			},
-			Type: bitcoin.OutputOpType,
+			Type: digibyte.OutputOpType,
 			Account: &types.AccountIdentifier{
 				Address: "tb1qjsrjvk2ug872pdypp33fjxke62y7awpgefr6ua",
 			},
 			Amount: &types.Amount{
 				Value:    "44657",
-				Currency: bitcoin.TestnetCurrency,
+				Currency: digibyte.TestnetCurrency,
 			},
 		},
 	}
@@ -148,7 +148,7 @@ func TestConstructionService(t *testing.T) {
 				},
 				Amount: &types.Amount{
 					Value:    "-1000000",
-					Currency: bitcoin.TestnetCurrency,
+					Currency: digibyte.TestnetCurrency,
 				},
 			},
 		},
@@ -161,7 +161,7 @@ func TestConstructionService(t *testing.T) {
 
 	// Test Metadata
 	metadata := &constructionMetadata{
-		ScriptPubKeys: []*bitcoin.ScriptPubKey{
+		ScriptPubKeys: []*digibyte.ScriptPubKey{
 			{
 				ASM:          "0 c005b00ad075d30b89a7b65b7dad8899ba6a9c55",
 				Hex:          "0014c005b00ad075d30b89a7b65b7dad8899ba6a9c55",
@@ -188,7 +188,7 @@ func TestConstructionService(t *testing.T) {
 		ctx,
 		defaultConfirmationTarget,
 	).Return(
-		bitcoin.MinFeeRate*10,
+		digibyte.MinFeeRate*10,
 		nil,
 	).Once()
 	metadataResponse, err := servicer.ConstructionMetadata(ctx, &types.ConstructionMetadataRequest{
@@ -201,7 +201,7 @@ func TestConstructionService(t *testing.T) {
 		SuggestedFee: []*types.Amount{
 			{
 				Value:    "1065", // 1,420 * 0.75
-				Currency: bitcoin.TestnetCurrency,
+				Currency: digibyte.TestnetCurrency,
 			},
 		},
 	}, metadataResponse)
@@ -220,7 +220,7 @@ func TestConstructionService(t *testing.T) {
 		ctx,
 		defaultConfirmationTarget,
 	).Return(
-		bitcoin.MinFeeRate,
+		digibyte.MinFeeRate,
 		nil,
 	).Once()
 	metadataResponse, err = servicer.ConstructionMetadata(ctx, &types.ConstructionMetadataRequest{
@@ -233,7 +233,7 @@ func TestConstructionService(t *testing.T) {
 		SuggestedFee: []*types.Amount{
 			{
 				Value:    "142", // we don't go below minimum fee rate
-				Currency: bitcoin.TestnetCurrency,
+				Currency: digibyte.TestnetCurrency,
 			},
 		},
 	}, metadataResponse)
@@ -253,13 +253,13 @@ func TestConstructionService(t *testing.T) {
 				Index:        0,
 				NetworkIndex: &val0,
 			},
-			Type: bitcoin.InputOpType,
+			Type: digibyte.InputOpType,
 			Account: &types.AccountIdentifier{
 				Address: "tb1qcqzmqzkswhfshzd8kedhmtvgnxax48z4fklhvm",
 			},
 			Amount: &types.Amount{
 				Value:    "-1000000",
-				Currency: bitcoin.TestnetCurrency,
+				Currency: digibyte.TestnetCurrency,
 			},
 			CoinChange: &types.CoinChange{
 				CoinIdentifier: &types.CoinIdentifier{
@@ -273,13 +273,13 @@ func TestConstructionService(t *testing.T) {
 				Index:        1,
 				NetworkIndex: &val0,
 			},
-			Type: bitcoin.OutputOpType,
+			Type: digibyte.OutputOpType,
 			Account: &types.AccountIdentifier{
 				Address: "tb1q3r8xjf0c2yazxnq9ey3wayelygfjxpfqjvj5v7",
 			},
 			Amount: &types.Amount{
 				Value:    "954843",
-				Currency: bitcoin.TestnetCurrency,
+				Currency: digibyte.TestnetCurrency,
 			},
 		},
 		{
@@ -287,13 +287,13 @@ func TestConstructionService(t *testing.T) {
 				Index:        2,
 				NetworkIndex: &val1,
 			},
-			Type: bitcoin.OutputOpType,
+			Type: digibyte.OutputOpType,
 			Account: &types.AccountIdentifier{
 				Address: "tb1qjsrjvk2ug872pdypp33fjxke62y7awpgefr6ua",
 			},
 			Amount: &types.Amount{
 				Value:    "44657",
-				Currency: bitcoin.TestnetCurrency,
+				Currency: digibyte.TestnetCurrency,
 			},
 		},
 	}

@@ -17,8 +17,8 @@ package services
 import (
 	"context"
 
-	"github.com/coinbase/rosetta-bitcoin/bitcoin"
-	"github.com/coinbase/rosetta-bitcoin/configuration"
+	"github.com/tehG30RG3/rosetta-digibyte/digibyte"
+	"github.com/tehG30RG3/rosetta-digibyte/configuration"
 
 	"github.com/coinbase/rosetta-sdk-go/server"
 	"github.com/coinbase/rosetta-sdk-go/types"
@@ -67,7 +67,7 @@ func (s *NetworkAPIService) NetworkStatus(
 
 	peers, err := s.client.GetPeers(ctx)
 	if err != nil {
-		return nil, wrapErr(ErrBitcoind, err)
+		return nil, wrapErr(ErrDigiByted, err)
 	}
 
 	cachedBlockResponse, err := s.i.GetBlockLazy(ctx, nil)
@@ -95,8 +95,8 @@ func (s *NetworkAPIService) NetworkOptions(
 			MiddlewareVersion: &MiddlewareVersion,
 		},
 		Allow: &types.Allow{
-			OperationStatuses:       bitcoin.OperationStatuses,
-			OperationTypes:          bitcoin.OperationTypes,
+			OperationStatuses:       digibyte.OperationStatuses,
+			OperationTypes:          digibyte.OperationTypes,
 			Errors:                  Errors,
 			HistoricalBalanceLookup: HistoricalBalanceLookup,
 		},

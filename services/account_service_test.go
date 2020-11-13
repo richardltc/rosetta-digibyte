@@ -18,9 +18,9 @@ import (
 	"context"
 	"testing"
 
-	"github.com/coinbase/rosetta-bitcoin/bitcoin"
-	"github.com/coinbase/rosetta-bitcoin/configuration"
-	mocks "github.com/coinbase/rosetta-bitcoin/mocks/services"
+	"github.com/tehG30RG3/rosetta-digibyte/digibyte"
+	"github.com/tehG30RG3/rosetta-digibyte/configuration"
+	mocks "github.com/tehG30RG3/rosetta-digibyte/mocks/services"
 
 	"github.com/coinbase/rosetta-sdk-go/types"
 	"github.com/stretchr/testify/assert"
@@ -44,7 +44,7 @@ func TestAccountBalance_Offline(t *testing.T) {
 func TestAccountBalance_Online_Current(t *testing.T) {
 	cfg := &configuration.Configuration{
 		Mode:     configuration.Online,
-		Currency: bitcoin.MainnetCurrency,
+		Currency: digibyte.MainnetCurrency,
 	}
 	mockIndexer := &mocks.Indexer{}
 	servicer := NewAccountAPIService(cfg, mockIndexer)
@@ -97,7 +97,7 @@ func TestAccountBalance_Online_Current(t *testing.T) {
 		Balances: []*types.Amount{
 			{
 				Value:    "25",
-				Currency: bitcoin.MainnetCurrency,
+				Currency: digibyte.MainnetCurrency,
 			},
 		},
 	}, bal)
@@ -108,7 +108,7 @@ func TestAccountBalance_Online_Current(t *testing.T) {
 func TestAccountBalance_Online_Historical(t *testing.T) {
 	cfg := &configuration.Configuration{
 		Mode:     configuration.Online,
-		Currency: bitcoin.MainnetCurrency,
+		Currency: digibyte.MainnetCurrency,
 	}
 	mockIndexer := &mocks.Indexer{}
 	servicer := NewAccountAPIService(cfg, mockIndexer)
@@ -125,14 +125,14 @@ func TestAccountBalance_Online_Historical(t *testing.T) {
 	}
 	amount := &types.Amount{
 		Value:    "25",
-		Currency: bitcoin.MainnetCurrency,
+		Currency: digibyte.MainnetCurrency,
 	}
 
 	mockIndexer.On(
 		"GetBalance",
 		ctx,
 		account,
-		bitcoin.MainnetCurrency,
+		digibyte.MainnetCurrency,
 		partialBlock,
 	).Return(amount, block, nil).Once()
 	bal, err := servicer.AccountBalance(ctx, &types.AccountBalanceRequest{

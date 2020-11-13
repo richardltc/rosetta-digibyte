@@ -1,0 +1,682 @@
+Searching 68 files for "bitcoin"
+
+/Users/julianjager/Documents/GitHub/rosetta-digibyte/Dockerfile:
+   15  
+   16  # Build digibyted
+   17: FROM ubuntu:18.04 as digibyted-builder
+   18  
+   19  RUN mkdir -p /app \
+   ..
+   21  WORKDIR /app
+   22  
+   23: # Source: https://github.com/bitcoin/bitcoin/blob/master/doc/build-unix.md#ubuntu--debian
+   24  RUN apt-get update && apt-get install -y make gcc g++ autoconf autotools-dev bsdmainutils build-essential git libboost-all-dev \
+   25    libcurl4-openssl-dev libdb++-dev libevent-dev libssl-dev libtool pkg-config python python-pip libzmq3-dev wget
+   26  
+   27: # VERSION: Bitcoin Core 0.20.1
+   28: RUN git clone https://github.com/bitcoin/bitcoin \
+   29:   && cd bitcoin \
+   30    && git checkout 7ff64311bee570874c4f0dfa18f518552188df08
+   31  
+   32: RUN cd bitcoin \
+   33    && ./autogen.sh \
+   34    && ./configure --enable-glibc-back-compat --disable-tests --without-miniupnpc --without-gui --with-incompatible-bdb --disable-hardening --disable-zmq --disable-bench --disable-wallet \
+   35    && make
+   36  
+   37: RUN mv bitcoin/src/digibyted /app/digibyted \
+   38:   && rm -rf bitcoin
+   39  
+   40  # Build Rosetta Server Components
+   ..
+   82  WORKDIR /app
+   83  
+   84: # Copy binary from digibyted-builder
+   85: COPY --from=digibyted-builder /app/digibyted /app/digibyted
+   86  
+   87  # Copy binary from rosetta-builder
+
+/Users/julianjager/Documents/GitHub/rosetta-digibyte/main.go:
+   88  
+   89  	g.Go(func() error {
+   90: 		return digibyte.StartBitcoind(ctx, cfg.ConfigPath, g)
+   91  	})
+   92  
+
+/Users/julianjager/Documents/GitHub/rosetta-digibyte/assets/bitcoin-mainnet.conf:
+    4  
+    5  # DO NOT USE THIS CONFIGURATION FILE IF YOU PLAN TO EXPOSE
+    6: # BITCOIND'S RPC PORT PUBLICALLY (THESE INSECURE CREDENTIALS
+    7: # COULD LEAD TO AN ATTACK). ROSETTA-BITCOIN USES THE RPC PORT
+    8  # FOR INDEXING AND TRANSACTION BROADCAST BUT NEVER PROVIDES THE
+    9: # CALLER ACCESS TO BITCOIND'S RPC PORT.
+   10  
+   11: datadir=/data/digibyted
+   12  bind=0.0.0.0
+   13  rpcbind=0.0.0.0
+
+/Users/julianjager/Documents/GitHub/rosetta-digibyte/assets/bitcoin-testnet.conf:
+    4  
+    5  # DO NOT USE THIS CONFIGURATION FILE IF YOU PLAN TO EXPOSE
+    6: # BITCOIND'S RPC PORT PUBLICALLY (THESE INSECURE CREDENTIALS
+    7: # COULD LEAD TO AN ATTACK). ROSETTA-BITCOIN USES THE RPC PORT
+    8  # FOR INDEXING AND TRANSACTION BROADCAST BUT NEVER PROVIDES THE
+    9: # CALLER ACCESS TO BITCOIND'S RPC PORT.
+   10  
+   11: datadir=/data/digibyted
+   12  bantime=15
+   13  rpcallowip=0.0.0.0/0
+
+/Users/julianjager/Documents/GitHub/rosetta-digibyte/assets/bitcoin.json:
+    1  {
+    2   "network": {
+    3:   "blockchain": "Bitcoin",
+    4    "network": "Mainnet"
+    5   },
+
+/Users/julianjager/Documents/GitHub/rosetta-digibyte/configuration/configuration.go:
+   23  	"time"
+   24  
+   25: 	"github.com/tehG30RG3/rosetta-digibyte/bitcoin"
+   26  
+   27  	"github.com/btcsuite/btcd/chaincfg"
+   ..
+   43  	Offline Mode = "OFFLINE"
+   44  
+   45: 	// Mainnet is the Bitcoin Mainnet.
+   46  	Mainnet string = "MAINNET"
+   47  
+   48: 	// Testnet is Bitcoin Testnet3.
+   49  	Testnet string = "TESTNET"
+   50  
+   51: 	// mainnetConfigPath is the path of the Bitcoin
+   52  	// configuration file for mainnet.
+   53: 	mainnetConfigPath = "/app/bitcoin-mainnet.conf"
+   54  
+   55: 	// testnetConfigPath is the path of the Bitcoin
+   56  	// configuration file for testnet.
+   57: 	testnetConfigPath = "/app/bitcoin-testnet.conf"
+   58  
+   59  	// Zstandard compression dictionaries
+   ..
+   66  
+   67  	// min prune depth is 288:
+   68: 	// https://github.com/bitcoin/bitcoin/blob/ad2952d17a2af419a04256b10b53c7377f826a27/src/validation.h#L84
+   69  	pruneDepth = int64(10000) //nolint
+   70  
+   71  	// min prune height (on mainnet):
+   72: 	// https://github.com/bitcoin/bitcoin/blob/62d137ac3b701aae36c1aa3aa93a83fd6357fde6/src/chainparams.cpp#L102
+   73  	minPruneHeight = int64(100000) //nolint
+   74  
+   ..
+   80  	DataDirectory = "/data"
+   81  
+   82: 	digibytedPath = "digibyted"
+   83  	indexerPath  = "indexer"
+   84  
+   ..
+  121  	Pruning                *PruningConfiguration
+  122  	IndexerPath            string
+  123: 	BitcoindPath           string
+  124  	Compressors            []*storage.CompressorEntry
+  125  }
+  ...
+  144  		}
+  145  
+  146: 		config.BitcoindPath = path.Join(baseDirectory, digibytedPath)
+  147: 		if err := ensurePathExists(config.BitcoindPath); err != nil {
+  148: 			return nil, fmt.Errorf("%w: unable to create digibyted path", err)
+  149  		}
+  150  	case Offline:
+
+/Users/julianjager/Documents/GitHub/rosetta-digibyte/configuration/configuration_test.go:
+   21  	"testing"
+   22  
+   23: 	"github.com/tehG30RG3/rosetta-digibyte/bitcoin"
+   24  
+   25  	"github.com/coinbase/rosetta-sdk-go/storage"
+   ..
+  144  			} else {
+  145  				test.cfg.IndexerPath = path.Join(newDir, "indexer")
+  146: 				test.cfg.BitcoindPath = path.Join(newDir, "digibyted")
+  147  				assert.Equal(t, test.cfg, cfg)
+  148  				assert.NoError(t, err)
+
+/Users/julianjager/Documents/GitHub/rosetta-digibyte/digibyte/client.go:
+   13  // limitations under the License.
+   14  
+   15: package digibyte
+   16  
+   17  import (
+   ..
+   27  	"time"
+   28  
+   29: 	bitcoinUtils "github.com/tehG30RG3/rosetta-digibyte/utils"
+   30  
+   31  	"github.com/btcsuite/btcutil"
+   ..
+   37  const (
+   38  	// genesisBlockIndex is the height of the block we consider to be the
+   39: 	// genesis block of the bitcoin blockchain for polling
+   40  	genesisBlockIndex = 0
+   41  
+   ..
+   91  
+   92  	// timeMultiplier is used to multiply the time
+   93: 	// returned in Bitcoin blocks to be milliseconds.
+   94  	timeMultiplier = 1000
+   95  
+   96  	// rpc credentials are fixed in rosetta-digibyte
+   97: 	// because we never expose access to the raw digibyted
+   98  	// endpoints (that could be used perform an attack, like
+   99  	// changing our peers).
+  ...
+  111  )
+  112  
+  113: // Client is used to fetch blocks from digibyted and
+  114: // to parse Bitcoin block data into Rosetta types.
+  115  //
+  116: // We opted not to use existing Bitcoin RPC libraries
+  117  // because they don't allow providing context
+  118  // in each request.
+  ...
+  132  }
+  133  
+  134: // NewClient creates a new Bitcoin client.
+  135  func NewClient(
+  136  	baseURL string,
+  ...
+  163  
+  164  // NetworkStatus returns the *types.NetworkStatusResponse for
+  165: // digibyted.
+  166  func (b *Client) NetworkStatus(ctx context.Context) (*types.NetworkStatusResponse, error) {
+  167  	rawBlock, err := b.getBlock(ctx, nil)
+  ...
+  242  }
+  243  
+  244: // ParseBlock returns a parsed bitcoin block given a raw bitcoin
+  245  // block and a map of transactions containing inputs.
+  246  func (b *Client) ParseBlock(
+  ...
+  265  
+  266  // SendRawTransaction submits a serialized transaction
+  267: // to digibyted.
+  268  func (b *Client) SendRawTransaction(
+  269  	ctx context.Context,
+  ...
+  302  
+  303  // PruneBlockchain prunes up to the provided height.
+  304: // https://bitcoincore.org/en/doc/0.20.0/rpc/blockchain/pruneblockchain
+  305  func (b *Client) PruneBlockchain(
+  306  	ctx context.Context,
+  ...
+  473  // skipTransactionOperations is used to skip operations on transactions that
+  474  // contain duplicate UTXOs (which are no longer possible after BIP-30). This
+  475: // function mirrors the behavior of a similar commit in bitcoin-core.
+  476  //
+  477: // Source: https://github.com/bitcoin/bitcoin/commit/ab91bf39b7c11e9c86bb2043c24f0f377f1cf514
+  478  func skipTransactionOperations(blockNumber int64, blockHash string, transactionHash string) bool {
+  479  	if blockNumber == 91842 && blockHash == "00000000000a4d0a398161ffc163c503763b1f4360639393e0e4c8e300e0caec" &&
+  ...
+  496  	coins map[string]*storage.AccountCoin,
+  497  ) ([]*types.Transaction, error) {
+  498: 	logger := bitcoinUtils.ExtractLogger(ctx, "client")
+  499  
+  500  	if block == nil {
+  ...
+  572  
+  573  	for networkIndex, input := range tx.Inputs {
+  574: 		if bitcoinIsCoinbaseInput(input, txIndex, networkIndex) {
+  575  			txOp, err := b.coinbaseTxOperation(input, int64(len(txOps)), int64(networkIndex))
+  576  			if err != nil {
+  ...
+  630  
+  631  // parseOutputTransactionOperation returns the types.Operation for the specified
+  632: // `bitcoinOutput` transaction output.
+  633  func (b *Client) parseOutputTransactionOperation(
+  634  	output *Output,
+  ...
+  659  	}
+  660  
+  661: 	// If we are unable to parse the output account (i.e. digibyted
+  662  	// returns a blank/nonstandard ScriptPubKey), we create an address as the
+  663  	// concatenation of the tx hash and index.
+  ...
+  701  	inputIndex int,
+  702  ) (string, int64, bool) {
+  703: 	if bitcoinIsCoinbaseInput(input, txIndex, inputIndex) {
+  704  		return "", -1, false
+  705  	}
+  ...
+  708  }
+  709  
+  710: // bitcoinIsCoinbaseInput returns whether the specified input is
+  711  // the coinbase input. The coinbase input is always the first input in the first
+  712  // transaction, and does not contain a previous transaction hash.
+  713: func bitcoinIsCoinbaseInput(input *Input, txIndex int, inputIndex int) bool {
+  714  	return txIndex == 0 && inputIndex == 0 && input.TxHash == "" && input.Coinbase != ""
+  715  }
+  ...
+  770  }
+  771  
+  772: // parseOutputAccount parses a bitcoinScriptPubKey and returns an account
+  773  // identifier. The account identifier's address corresponds to the first
+  774  // address encoded in the script.
+  ...
+  806  }
+  807  
+  808: // post makes a HTTP request to a Bitcoin node
+  809  func (b *Client) post(
+  810  	ctx context.Context,
+
+/Users/julianjager/Documents/GitHub/rosetta-digibyte/digibyte/client_test.go:
+   13  // limitations under the License.
+   14  
+   15: package digibyte
+   16  
+   17  import (
+
+/Users/julianjager/Documents/GitHub/rosetta-digibyte/digibyte/node.go:
+   13  // limitations under the License.
+   14  
+   15: package digibyte
+   16  
+   17  import (
+   ..
+   30  
+   31  const (
+   32: 	digibytedLogger       = "digibyted"
+   33: 	digibytedStdErrLogger = "digibyted stderr"
+   34  )
+   35  
+   ..
+   52  		}
+   53  
+   54: 		// Print debug log if from digibytedLogger
+   55: 		if identifier == digibytedLogger {
+   56  			logger.Debugw(message)
+   57  			continue
+   ..
+   62  }
+   63  
+   64: // StartBitcoind starts a digibyted daemon in another goroutine
+   65  // and logs the results to the console.
+   66: func StartBitcoind(ctx context.Context, configPath string, g *errgroup.Group) error {
+   67: 	logger := utils.ExtractLogger(ctx, "digibyted")
+   68  	cmd := exec.Command(
+   69: 		"/app/digibyted",
+   70  		fmt.Sprintf("--conf=%s", configPath),
+   71  	) // #nosec G204
+   ..
+   82  
+   83  	g.Go(func() error {
+   84: 		return logPipe(ctx, stdout, digibytedLogger)
+   85  	})
+   86  
+   87  	g.Go(func() error {
+   88: 		return logPipe(ctx, stderr, digibytedStdErrLogger)
+   89  	})
+   90  
+   91  	if err := cmd.Start(); err != nil {
+   92: 		return fmt.Errorf("%w: unable to start digibyted", err)
+   93  	}
+   94  
+   ..
+   96  		<-ctx.Done()
+   97  
+   98: 		logger.Warnw("sending interrupt to digibyted")
+   99  		return cmd.Process.Signal(os.Interrupt)
+  100  	})
+
+/Users/julianjager/Documents/GitHub/rosetta-digibyte/digibyte/types.go:
+   13  // limitations under the License.
+   14  
+   15: package digibyte
+   16  
+   17  import (
+   ..
+   25  const (
+   26  	// Blockchain is digibyte.
+   27: 	Blockchain string = "Bitcoin"
+   28  
+   29  	// MainnetNetwork is the value of the network
+   ..
+   39  	Decimals = 8
+   40  
+   41: 	// SatoshisInBitcoin is the number of
+   42  	// Satoshis in 1 BTC (10^8).
+   43: 	SatoshisInBitcoin = 100000000
+   44  
+   45  	// InputOpType is used to describe
+   ..
+   56  
+   57  	// SuccessStatus is the status of all
+   58: 	// Bitcoin operations because anything
+   59  	// on-chain is considered successful.
+   60  	SuccessStatus = "SUCCESS"
+   ..
+   70  	TransactionHashLength = 64
+   71  
+   72: 	// NullData is returned by digibyted
+   73  	// as the ScriptPubKey.Type for OP_RETURN
+   74  	// locking scripts.
+   ..
+   77  
+   78  // Fee estimate constants
+   79: // Source: https://bitcoinops.org/en/tools/calc-size/
+   80  const (
+   81  	MinFeeRate            = float64(0.00001) // nolint:gomnd
+   ..
+  136  
+  137  // ScriptPubKey is a script placed on the output operations
+  138: // of a Bitcoin transaction that must be satisfied to spend
+  139  // the output.
+  140  type ScriptPubKey struct {
+  ...
+  147  
+  148  // ScriptSig is a script on the input operations of a
+  149: // Bitcoin transaction that satisfies the ScriptPubKey
+  150  // on an output being spent.
+  151  type ScriptSig struct {
+  ...
+  154  }
+  155  
+  156: // BlockchainInfo is information about the Bitcoin network.
+  157  // This struct only contains the information necessary for
+  158  // this implementation.
+  ...
+  177  }
+  178  
+  179: // Block is a raw Bitcoin block (with verbosity == 2).
+  180  type Block struct {
+  181  	Hash              string  `json:"hash"`
+  ...
+  224  }
+  225  
+  226: // Transaction is a raw Bitcoin transaction.
+  227  type Transaction struct {
+  228  	Hex      string `json:"hex"`
+  ...
+  261  }
+  262  
+  263: // Input is a raw input in a Bitcoin transaction.
+  264  type Input struct {
+  265  	TxHash      string     `json:"txid"`
+  ...
+  285  }
+  286  
+  287: // Output is a raw output in a Bitcoin transaction.
+  288  type Output struct {
+  289  	Value        float64       `json:"value"`
+  ...
+  302  
+  303  // OperationMetadata is a collection of useful
+  304: // metadata from Bitcoin inputs and outputs.
+  305  type OperationMetadata struct {
+  306  	// Coinbase Metadata
+
+/Users/julianjager/Documents/GitHub/rosetta-digibyte/digibyte/utils.go:
+   13  // limitations under the License.
+   14  
+   15: package digibyte
+   16  
+   17  import (
+
+/Users/julianjager/Documents/GitHub/rosetta-digibyte/indexer/indexer.go:
+   21  	"time"
+   22  
+   23: 	"github.com/tehG30RG3/rosetta-digibyte/bitcoin"
+   24  	"github.com/tehG30RG3/rosetta-digibyte/configuration"
+   25  	"github.com/tehG30RG3/rosetta-digibyte/services"
+   ..
+  220  }
+  221  
+  222: // waitForNode returns once digibyted is ready to serve
+  223  // block queries.
+  224  func (i *Indexer) waitForNode(ctx context.Context) error {
+  ...
+  230  		}
+  231  
+  232: 		logger.Infow("waiting for digibyted...")
+  233  		if err := sdkUtils.ContextSleep(ctx, nodeWaitSleep); err != nil {
+  234  			return err
+  ...
+  237  }
+  238  
+  239: // Sync attempts to index Bitcoin blocks using
+  240  // the digibyte.Client until stopped.
+  241  func (i *Indexer) Sync(ctx context.Context) error {
+  ...
+  271  }
+  272  
+  273: // Prune attempts to prune blocks in digibyted every
+  274  // pruneFrequency.
+  275  func (i *Indexer) Prune(ctx context.Context) error {
+  ...
+  290  			}
+  291  
+  292: 			// Must meet pruning conditions in bitcoin core
+  293  			// Source:
+  294: 			// https://github.com/bitcoin/bitcoin/blob/a63a26f042134fa80356860c109edb25ac567552/src/rpc/blockchain.cpp#L953-L960
+  295  			pruneHeight := head.Index - i.pruningConfig.Depth
+  296  			if pruneHeight <= i.pruningConfig.MinHeight {
+  ...
+  299  			}
+  300  
+  301: 			logger.Infow("attempting to prune digibyted", "prune height", pruneHeight)
+  302  			prunedHeight, err := i.client.PruneBlockchain(ctx, pruneHeight)
+  303  			if err != nil {
+  304  				logger.Warnw(
+  305: 					"unable to prune digibyted",
+  306  					"prune height", pruneHeight,
+  307  					"error", err,
+  308  				)
+  309  			} else {
+  310: 				logger.Infow("pruned digibyted", "prune height", prunedHeight)
+  311  			}
+  312  		}
+
+/Users/julianjager/Documents/GitHub/rosetta-digibyte/indexer/indexer_test.go:
+   24  	"time"
+   25  
+   26: 	"github.com/tehG30RG3/rosetta-digibyte/bitcoin"
+   27  	"github.com/tehG30RG3/rosetta-digibyte/configuration"
+   28  	mocks "github.com/tehG30RG3/rosetta-digibyte/mocks/indexer"
+   ..
+   76  	assert.NoError(t, err)
+   77  
+   78: 	// Waiting for digibyted...
+   79  	mockClient.On("NetworkStatus", ctx).Return(nil, errors.New("not ready")).Once()
+   80  	mockClient.On("NetworkStatus", ctx).Return(&types.NetworkStatusResponse{}, nil).Once()
+
+/Users/julianjager/Documents/GitHub/rosetta-digibyte/mocks/indexer/client.go:
+    6  	context "context"
+    7  
+    8: 	bitcoin "github.com/tehG30RG3/rosetta-digibyte/bitcoin"
+    9  
+   10  	mock "github.com/stretchr/testify/mock"
+
+/Users/julianjager/Documents/GitHub/rosetta-digibyte/mocks/services/indexer.go:
+    6  	context "context"
+    7  
+    8: 	bitcoin "github.com/tehG30RG3/rosetta-digibyte/bitcoin"
+    9  
+   10  	mock "github.com/stretchr/testify/mock"
+
+/Users/julianjager/Documents/GitHub/rosetta-digibyte/rosetta-cli-conf/mainnet/config.json:
+    1  {
+    2    "network": {
+    3:     "blockchain": "Bitcoin",
+    4      "network": "Mainnet"
+    5    },
+
+/Users/julianjager/Documents/GitHub/rosetta-digibyte/rosetta-cli-conf/testnet/bitcoin.ros:
+   28  create_account(1){
+   29    create{
+   30:     network = {"network":"Testnet3", "blockchain":"Bitcoin"};
+   31      key = generate_key({"curve_type": "secp256k1"});
+   32      account = derive({
+   ..
+   45  transfer(10){
+   46    transfer_dry_run{
+   47:     transfer_dry_run.network = {"network":"Testnet3", "blockchain":"Bitcoin"};
+   48      currency = {"symbol":"tBTC", "decimals":8};
+   49  
+   ..
+  166  return_funds(10){
+  167    transfer_dry_run{
+  168:     transfer_dry_run.network = {"network":"Testnet3", "blockchain":"Bitcoin"};
+  169      currency = {"symbol":"tBTC", "decimals":8};
+  170  
+
+/Users/julianjager/Documents/GitHub/rosetta-digibyte/rosetta-cli-conf/testnet/config.json:
+    1  {
+    2    "network": {
+    3:     "blockchain": "Bitcoin",
+    4      "network": "Testnet3"
+    5    },
+
+/Users/julianjager/Documents/GitHub/rosetta-digibyte/services/account_service_test.go:
+   19  	"testing"
+   20  
+   21: 	"github.com/tehG30RG3/rosetta-digibyte/bitcoin"
+   22  	"github.com/tehG30RG3/rosetta-digibyte/configuration"
+   23  	mocks "github.com/tehG30RG3/rosetta-digibyte/mocks/services"
+
+/Users/julianjager/Documents/GitHub/rosetta-digibyte/services/construction_service.go:
+   25  	"strconv"
+   26  
+   27: 	"github.com/tehG30RG3/rosetta-digibyte/bitcoin"
+   28  	"github.com/tehG30RG3/rosetta-digibyte/configuration"
+   29  
+   ..
+   38  
+   39  const (
+   40: 	// bytesInKB is the number of bytes in a KB. In Bitcoin, this is
+   41  	// considered to be 1000.
+   42  	bytesInKb = float64(1000) // nolint:gomnd
+   ..
+  198  
+  199  	// Calculated the estimated fee in Satoshis
+  200: 	satoshisPerB := (feePerKB * float64(digibyte.SatoshisInBitcoin)) / bytesInKb
+  201  	estimatedFee := satoshisPerB * options.EstimatedSize
+  202  	suggestedFee := &types.Amount{
+  ...
+  414  		return nil, wrapErr(
+  415  			ErrUnableToParseIntermediateResult,
+  416: 			fmt.Errorf("%w unable to unmarshal bitcoin transaction", err),
+  417  		)
+  418  	}
+  ...
+  500  		return nil, wrapErr(
+  501  			ErrUnableToParseIntermediateResult,
+  502: 			fmt.Errorf("%w unable to unmarshal signed bitcoin transaction", err),
+  503  		)
+  504  	}
+  ...
+  542  		return nil, wrapErr(
+  543  			ErrUnableToParseIntermediateResult,
+  544: 			fmt.Errorf("%w unable to unmarshal bitcoin transaction", err),
+  545  		)
+  546  	}
+  ...
+  638  		return nil, wrapErr(
+  639  			ErrUnableToParseIntermediateResult,
+  640: 			fmt.Errorf("%w unable to unmarshal signed bitcoin transaction", err),
+  641  		)
+  642  	}
+  ...
+  772  		return nil, wrapErr(
+  773  			ErrUnableToParseIntermediateResult,
+  774: 			fmt.Errorf("%w unable to unmarshal signed bitcoin transaction", err),
+  775  		)
+  776  	}
+  ...
+  778  	txHash, err := s.client.SendRawTransaction(ctx, signed.Transaction)
+  779  	if err != nil {
+  780: 		return nil, wrapErr(ErrBitcoind, fmt.Errorf("%w unable to submit transaction", err))
+  781  	}
+  782  
+
+/Users/julianjager/Documents/GitHub/rosetta-digibyte/services/construction_service_test.go:
+   20  	"testing"
+   21  
+   22: 	"github.com/tehG30RG3/rosetta-digibyte/bitcoin"
+   23  	"github.com/tehG30RG3/rosetta-digibyte/configuration"
+   24  	mocks "github.com/tehG30RG3/rosetta-digibyte/mocks/services"
+   ..
+  377  
+  378  	// Test Submit
+  379: 	bitcoinTransaction := "010000000001017f9cf50b02dd5258f80cd5c3437302e027dd1336172a20cdc80305c5a55741b10100000000ffffffff02db910e000000000016001488ce6925f8513a234c05c922ee933f221323052071ae000000000000160014940726595c41fca0b4810c62991ad9d289eeb82802473044022025876ec8b9f51d343a5a56ac549c0c828005ef45ebe9da166db645c09157223f02204cd08b7278a8889a81135915bce10d1ef3bb92b217f81a0de7e79ffb3dfd6ac501210325c9a4252789b31dbb3454ec647e9516e7c596bcde2bd5da71a60fab8644e43800000000" // nolint
+  380  	mockClient.On(
+  381  		"SendRawTransaction",
+  382  		ctx,
+  383: 		bitcoinTransaction,
+  384  	).Return(
+  385  		transactionIdentifier.Hash,
+
+/Users/julianjager/Documents/GitHub/rosetta-digibyte/services/errors.go:
+   26  		ErrUnavailableOffline,
+   27  		ErrNotReady,
+   28: 		ErrBitcoind,
+   29  		ErrBlockNotFound,
+   30  		ErrUnableToDerive,
+   ..
+   58  	}
+   59  
+   60: 	// ErrNotReady is returned when digibyted is not
+   61  	// yet ready to serve queries.
+   62  	ErrNotReady = &types.Error{
+   63  		Code:      2, //nolint
+   64: 		Message:   "Bitcoind is not ready",
+   65  		Retriable: true,
+   66  	}
+   67  
+   68: 	// ErrBitcoind is returned when digibyted
+   69  	// errors on a request.
+   70: 	ErrBitcoind = &types.Error{
+   71  		Code:    3, //nolint
+   72: 		Message: "Bitcoind error",
+   73  	}
+   74  
+
+/Users/julianjager/Documents/GitHub/rosetta-digibyte/services/mempool_service.go:
+   52  	mempoolTransactions, err := s.client.RawMempool(ctx)
+   53  	if err != nil {
+   54: 		return nil, wrapErr(ErrBitcoind, err)
+   55  	}
+   56  
+
+/Users/julianjager/Documents/GitHub/rosetta-digibyte/services/network_service.go:
+   18  	"context"
+   19  
+   20: 	"github.com/tehG30RG3/rosetta-digibyte/bitcoin"
+   21  	"github.com/tehG30RG3/rosetta-digibyte/configuration"
+   22  
+   ..
+   68  	peers, err := s.client.GetPeers(ctx)
+   69  	if err != nil {
+   70: 		return nil, wrapErr(ErrBitcoind, err)
+   71  	}
+   72  
+
+/Users/julianjager/Documents/GitHub/rosetta-digibyte/services/network_service_test.go:
+   19  	"testing"
+   20  
+   21: 	"github.com/tehG30RG3/rosetta-digibyte/bitcoin"
+   22  	"github.com/tehG30RG3/rosetta-digibyte/configuration"
+   23  	mocks "github.com/tehG30RG3/rosetta-digibyte/mocks/services"
+
+/Users/julianjager/Documents/GitHub/rosetta-digibyte/services/types.go:
+   18  	"context"
+   19  
+   20: 	"github.com/tehG30RG3/rosetta-digibyte/bitcoin"
+   21  
+   22  	"github.com/coinbase/rosetta-sdk-go/types"
+   ..
+   25  const (
+   26  	// NodeVersion is the version of
+   27: 	// bitcoin core we are using.
+   28  	NodeVersion = "0.20.1"
+   29  
+
+154 matches across 27 files
