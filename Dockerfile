@@ -14,28 +14,28 @@
 # limitations under the License.
 
 # Build digibyted
-FROM ubuntu:18.04 as bitcoind-builder
+FROM ubuntu:18.04 as digibyted-builder
 
 RUN mkdir -p /app \
   && chown -R nobody:nogroup /app
 WORKDIR /app
 
-# Source: https://github.com/bitcoin/bitcoin/blob/master/doc/build-unix.md#ubuntu--debian
+# Source: https://github.com/digibyte/digibyte/blob/master/doc/build-unix.md#ubuntu--debian
 RUN apt-get update && apt-get install -y make gcc g++ autoconf autotools-dev bsdmainutils build-essential git libboost-all-dev \
   libcurl4-openssl-dev libdb++-dev libevent-dev libssl-dev libtool pkg-config python python-pip libzmq3-dev wget
 
-# VERSION: DigiByte Core 0.20.1
-RUN git clone https://github.com/bitcoin/bitcoin \
-  && cd bitcoin \
-  && git checkout 7ff64311bee570874c4f0dfa18f518552188df08
+# VERSION: DigiByte Core 8.19.0
+RUN git clone https://github.com/DigiByte-Core/digibyte \
+  && cd digibyte \
+  && git checkout cb633d44ef24673768f9f0af55cb49a6b1c7fcc9
 
-RUN cd bitcoin \
+RUN cd digibyte \
   && ./autogen.sh \
   && ./configure --enable-glibc-back-compat --disable-tests --without-miniupnpc --without-gui --with-incompatible-bdb --disable-hardening --disable-zmq --disable-bench --disable-wallet \
   && make
 
-RUN mv bitcoin/src/bitcoind /app/bitcoind \
-  && rm -rf bitcoin
+RUN mv digibyte/src/digibyted /app/digibyted \
+  && rm -rf digibyte
 
 # Build Rosetta Server Components
 FROM ubuntu:18.04 as rosetta-builder
@@ -81,8 +81,8 @@ RUN mkdir -p /app \
 
 WORKDIR /app
 
-# Copy binary from bitcoind-builder
-COPY --from=bitcoind-builder /app/bitcoind /app/bitcoind
+# Copy binary from digibyted-builder
+COPY --from=digibyted-builder /app/digibyted /app/digibyted
 
 # Copy binary from rosetta-builder
 COPY --from=rosetta-builder /app/* /app/
