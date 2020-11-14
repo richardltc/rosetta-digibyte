@@ -31,16 +31,16 @@ build-release:
 	docker save rosetta-digibyte:$(version) | gzip > rosetta-digibyte-$(version).tar.gz;
 
 run-mainnet-online:
-	docker run -d --rm --ulimit "nofile=${NOFILE}:${NOFILE}" -v "${PWD}/digibyte-data:/data" -e "MODE=ONLINE" -e "NETWORK=MAINNET" -e "PORT=8080" -p 8080:8080 -p 12024:12024 rosetta-digibyte:latest
+	docker run -d --rm --name digibyte-mainnet-online --ulimit "nofile=${NOFILE}:${NOFILE}" -v "${PWD}/digibyte-data:/data" -e "MODE=ONLINE" -e "NETWORK=MAINNET" -e "PORT=8080" -p 8080:8080 -p 12024:12024 rosetta-digibyte:latest
 
 run-mainnet-offline:
-	docker run -d --rm -e "MODE=OFFLINE" -e "NETWORK=MAINNET" -e "PORT=8081" -p 8081:8081 rosetta-digibyte:latest
+	docker run -d --rm --name digibyte-mainnet-offline -e "MODE=OFFLINE" -e "NETWORK=MAINNET" -e "PORT=8081" -p 8081:8081 rosetta-digibyte:latest
 
 run-testnet-online:
-	docker run -d --rm --ulimit "nofile=${NOFILE}:${NOFILE}" -v "${PWD}/digibyte-data:/data" -e "MODE=ONLINE" -e "NETWORK=TESTNET" -e "PORT=8080" -p 8080:8080 -p 12026:12026 rosetta-digibyte:latest
+	docker run -d --rm --name digibyte-testnet-online --ulimit "nofile=${NOFILE}:${NOFILE}" -v "${PWD}/digibyte-data:/data" -e "MODE=ONLINE" -e "NETWORK=TESTNET" -e "PORT=8080" -p 8080:8080 -p 12026:12026 rosetta-digibyte:latest
 
 run-testnet-offline:
-	docker run -d --rm -e "MODE=OFFLINE" -e "NETWORK=TESTNET" -e "PORT=8081" -p 8081:8081 rosetta-digibyte:latest
+	docker run -d --rm --name digibyte-testnet-offline -e "MODE=OFFLINE" -e "NETWORK=TESTNET" -e "PORT=8081" -p 8081:8081 rosetta-digibyte:latest
 
 train:
 	./zstd-train.sh $(network) transaction $(data-directory)
