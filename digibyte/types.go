@@ -18,7 +18,6 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/btcsuite/btcd/chaincfg"
 	"github.com/coinbase/rosetta-sdk-go/types"
 )
 
@@ -39,7 +38,7 @@ const (
 	Decimals = 8
 
 	// SatoshisInDigiByte is the number of
-	// Satoshis in 1 BTC (10^8).
+	// Satoshis in 1 DGB (10^8).
 	SatoshisInDigiByte = 100000000
 
 	// InputOpType is used to describe
@@ -91,12 +90,12 @@ var (
 		Hash: "000000000019d6689c085ae165831e934ff763ae46a2a6c172b3f1b60a8ce26f",
 	}
 
-	// MainnetParams are the params for mainnet.
-	MainnetParams = &chaincfg.MainNetParams
+	// // MainnetParams are the params for mainnet.
+	MainnetParams = &DigiByteMainnetParams
 
 	// MainnetCurrency is the *types.Currency for mainnet.
 	MainnetCurrency = &types.Currency{
-		Symbol:   "BTC",
+		Symbol:   "DGB",
 		Decimals: Decimals,
 	}
 
@@ -106,11 +105,11 @@ var (
 	}
 
 	// TestnetParams are the params for testnet.
-	TestnetParams = &chaincfg.TestNet3Params
+	TestnetParams = &DigiByteTestnetParams
 
 	// TestnetCurrency is the *types.Currency for testnet.
 	TestnetCurrency = &types.Currency{
-		Symbol:   "tBTC",
+		Symbol:   "tDGB",
 		Decimals: Decimals,
 	}
 
