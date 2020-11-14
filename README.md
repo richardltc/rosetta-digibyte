@@ -7,7 +7,7 @@
    Rosetta DigiByte
 </h3>
 <p align="center">
-  <a href="https://circleci.com/gh/tehG30RG3/rosetta-digibyte/tree/master"><img src="https://circleci.com/gh/tehG30RG3/rosetta-digibyte/tree/master.svg?style=shield" /></a>
+  <!--<a href="https://circleci.com/gh/tehG30RG3/rosetta-digibyte/tree/master"><img src="https://circleci.com/gh/tehG30RG3/rosetta-digibyte/tree/master.svg?style=shield" /></a> -->
   <a href="https://coveralls.io/github/tehG30RG3/rosetta-digibyte"><img src="https://coveralls.io/repos/github/tehG30RG3/rosetta-digibyte/badge.svg" /></a>
   <a href="https://goreportcard.com/report/github.com/tehG30RG3/rosetta-digibyte"><img src="https://goreportcard.com/badge/github.com/tehG30RG3/rosetta-digibyte" /></a>
   <a href="https://github.com/tehG30RG3/rosetta-digibyte/blob/master/LICENSE.txt"><img src="https://img.shields.io/github/license/tehG30RG3/rosetta-digibyte.svg" /></a>
